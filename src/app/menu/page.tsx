@@ -52,6 +52,13 @@ export default function MenuPage() {
     "Beverages",
   ], []);
 
+  const getCategoryCount = (catName: string) => {
+    if (catName === "All") {
+      return items.filter((item) => item.isAvailable).length;
+    }
+    return items.filter((item) => item.category?.name === catName && item.isAvailable).length;
+  };
+
   useEffect(() => {
     const fetchMenu = async () => {
       setLoading(true);
@@ -130,20 +137,30 @@ export default function MenuPage() {
           </div>
 
           {/* Category Tabs */}
-          <div className="flex flex-wrap justify-center gap-2 md:gap-3 overflow-x-auto py-2">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`px-4 py-2 text-[10px] uppercase tracking-widest font-sans font-bold border transition-all duration-300 cursor-pointer ${
-                  activeCategory === cat
-                    ? "bg-gold text-white border-gold"
-                    : "bg-transparent border-gold/20 hover:border-gold text-charcoal-light hover:text-gold"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+          <div className="flex flex-wrap justify-center gap-2 md:gap-3 overflow-x-auto py-2 no-scrollbar">
+            {categories.map((cat) => {
+              const count = getCategoryCount(cat);
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`px-4 py-2.5 text-[10px] uppercase tracking-widest font-sans font-bold border transition-all duration-300 cursor-pointer flex items-center gap-2 ${
+                    activeCategory === cat
+                      ? "bg-gold text-white border-gold shadow-md shadow-gold/25"
+                      : "bg-transparent border-gold/20 hover:border-gold/60 text-charcoal-light hover:text-gold"
+                  }`}
+                >
+                  <span>{cat}</span>
+                  <span className={`px-1.5 py-0.5 text-[9px] font-mono font-semibold rounded-full transition-colors ${
+                    activeCategory === cat
+                      ? "bg-white/20 text-white"
+                      : "bg-gold/10 text-gold"
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -191,7 +208,7 @@ export default function MenuPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.3 }}
-                  className="bg-white border border-cream-dark rounded-2xl overflow-hidden flex flex-col justify-between group shadow-md hover:shadow-xl hover:border-gold transition-all duration-300 hover:-translate-y-1"
+                  className="bg-white border border-cream-dark rounded-2xl overflow-hidden flex flex-col justify-between group shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(197,168,128,0.15)] hover:border-gold/60 transition-all duration-500 hover:-translate-y-2"
                 >
                   {/* Food Card Image section */}
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-charcoal">
@@ -211,8 +228,9 @@ export default function MenuPage() {
                       alt={item.name}
                       fill
                       sizes="(max-width: 768px) 100vw, 33vw"
-                      className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                      className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                       unoptimized
+                      loading="lazy"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = fallbackImage;

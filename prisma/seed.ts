@@ -1,16 +1,25 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import fs from "fs";
 
-const connectionString = process.env.DATABASE_URL;
-const pool = new pg.Pool({ connectionString });
-const adapter = new PrismaPg(pool);
+const connectionString = process.env.DATABASE_URL!;
+
+const adapter = new PrismaPg({
+  connectionString,
+  ssl: fs.existsSync("./supabase-ca.crt")
+    ? {
+        ca: fs.readFileSync("./supabase-ca.crt").toString(),
+      }
+    : {
+        rejectUnauthorized: false,
+      },
+});
 
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("Starting database seed...");
+  console.log("Starting database seed with 90 premium items...");
 
   // 1. Seed Roles
   console.log("Seeding Roles...");
@@ -28,7 +37,7 @@ async function main() {
   
   console.log(`Roles defined: ADMIN (${adminRole.id}), CUSTOMER (${customerRole.id})`);
 
-  // 2. Seed Default Branch (Multi-branch readiness)
+  // 2. Seed Default Branch
   console.log("Seeding Default Branch...");
   const defaultBranch = await prisma.restaurantBranch.upsert({
     where: { id: "default-branch-guntur" },
@@ -60,18 +69,14 @@ async function main() {
     { key: "gst_percentage", value: "0" },
     { key: "delivery_fee", value: "0" },
     { key: "restaurant_logo", value: "" },
-    // Ordering Settings
     { key: "order_min_amount", value: "100" },
     { key: "order_max_items", value: "30" },
     { key: "ordering_status", value: "ENABLED" },
-    // Reservation Settings
     { key: "reservation_max_guests", value: "12" },
-    { key: "reservation_slot_duration", value: "120" }, // 120 minutes per reservation slot
+    { key: "reservation_slot_duration", value: "120" },
     { key: "reservations_status", value: "ENABLED" },
-    // Notification Settings
     { key: "notify_email_alerts", value: "true" },
     { key: "notify_whatsapp_alerts", value: "false" },
-    // Branding Settings
     { key: "branding_primary_color", value: "#C5A880" },
     { key: "branding_dark_theme_bg", value: "#121212" },
   ];
@@ -153,317 +158,1105 @@ async function main() {
     categoryMap[catName] = cat.id;
   }
 
-  // 6. Seed authentic Telugu cuisine items
-  console.log("Seeding menu items...");
+  // 6. Seed exactly 90 premium items (10 per category)
+  console.log("Seeding 90 premium menu items...");
   const menuItemsData = [
-    // Starters
+    // --- STARTERS (10) ---
     {
       name: "Chicken 65",
       teluguName: "చికెన్ 65",
       isVeg: false,
-      description: "Crispy, deep-fried chicken chunks tossed in spicy yogurt sauce, curry leaves, and green chillies.",
-      price: 220,
-      image: "https://images.unsplash.com/photo-1610057099443-fde8c4d90e8b?q=80&w=600&auto=format&fit=crop",
+      description: "Spicy, deep-fried chicken cubes marinated in ginger, garlic, and Guntur red chillies, garnished with crispy curry leaves.",
+      price: 260,
+      image: "/menu/chicken_65.png",
       prepTime: 12,
       category: "Starters",
       isFeatured: true,
-      ingredients: ["Chicken", "Yogurt", "Curry Leaves", "Green Chillies", "Spices"]
+      ingredients: ["Chicken Chunks", "Yogurt", "Ginger-Garlic", "Curry Leaves"]
     },
     {
       name: "Apollo Fish",
       teluguName: "అపోలో ఫిష్",
       isVeg: false,
-      description: "Batter-fried fish fillets tossed in a spicy, tangy sauce with garlic, soy sauce, and green chillies.",
-      price: 290,
-      image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=600&auto=format&fit=crop",
+      description: "Crispy, golden-fried fish fillets tossed in a rich, tangy spiced yogurt sauce with green chillies.",
+      price: 320,
+      image: "/menu/apollo_fish.png",
       prepTime: 15,
       category: "Starters",
       isFeatured: false,
-      ingredients: ["Fish", "Garlic", "Green Chillies", "Soy Sauce", "Spices"]
+      ingredients: ["Fish Fillets", "Spiced Yogurt", "Green Chillies", "Garlic"]
     },
     {
-      name: "Paneer Tikka",
-      teluguName: "పనీర్ టిక్కా",
+      name: "Chilli Chicken",
+      teluguName: "చిల్లీ చికెన్",
+      isVeg: false,
+      description: "Indo-Chinese style crispy stir-fried chicken tossed with crunchy bell peppers, onions, and spicy green chillies.",
+      price: 250,
+      image: "/menu/chilli_chicken.png",
+      prepTime: 12,
+      category: "Starters",
+      isFeatured: false,
+      ingredients: ["Chicken Chunks", "Bell Peppers", "Soy Sauce", "Green Chillies"]
+    },
+    {
+      name: "Pepper Chicken",
+      teluguName: "పెప్పర్ చికెన్",
+      isVeg: false,
+      description: "Hot dry chicken stir-fry seasoned heavily with freshly crushed black peppercorns, roasted fennel, and fresh curry leaves.",
+      price: 260,
+      image: "/menu/pepper_chicken.png",
+      prepTime: 14,
+      category: "Starters",
+      isFeatured: false,
+      ingredients: ["Chicken Pieces", "Crushed Black Pepper", "Fennel Seeds", "Curry Leaves"]
+    },
+    {
+      name: "Chicken Majestic",
+      teluguName: "చికెన్ మెజెస్టిక్",
+      isVeg: false,
+      description: "Dry fried chicken strips coated in a smooth, tangy spiced buttermilk batter, griddled with garlic.",
+      price: 280,
+      image: "/menu/chicken_majestic.png",
+      prepTime: 14,
+      category: "Starters",
+      isFeatured: true,
+      ingredients: ["Chicken Strips", "Buttermilk", "Garlic Cloves", "Soy Sauce"]
+    },
+    {
+      name: "Paneer 65",
+      teluguName: "పన్నీర్ 65",
       isVeg: true,
-      description: "Spiced paneer cubes marinated in yogurt and herbs, skewered with onions and bell peppers, grilled in tandoor.",
+      description: "Crisp golden-fried fresh cottage cheese cubes seasoned with Southern spices and tossed in a yogurt sauce.",
+      price: 220,
+      image: "/menu/paneer_65.png",
+      prepTime: 10,
+      category: "Starters",
+      isFeatured: false,
+      ingredients: ["Cottage Cheese", "Southern Spices", "Curry Leaves", "Yogurt"]
+    },
+    {
+      name: "Crispy Corn",
+      teluguName: "క్రిస్పీ కార్న్",
+      isVeg: true,
+      description: "Golden deep-fried sweet corn kernels tossed with finely chopped onions, spring onions, and dry spices.",
+      price: 180,
+      image: "/menu/crispy_corn.png",
+      prepTime: 8,
+      category: "Starters",
+      isFeatured: false,
+      ingredients: ["Sweet Corn", "Onions", "Spring Onions", "Dry Spices"]
+    },
+    {
+      name: "Gobi Manchurian",
+      teluguName: "గోబీ మంచూరియా",
+      isVeg: true,
+      description: "Cauliflower florets battered and deep-fried, then tossed in a sweet, spicy, and tangy Indo-Chinese sauce.",
+      price: 190,
+      image: "/menu/gobi_manchurian.png",
+      prepTime: 10,
+      category: "Starters",
+      isFeatured: false,
+      ingredients: ["Cauliflower", "Manchurian Sauce", "Spring Onions", "Ginger"]
+    },
+    {
+      name: "Veg Manchurian",
+      teluguName: "వెజ్ మంచూరియా",
+      isVeg: true,
+      description: "Deep-fried mixed vegetable balls simmered in a thick, savory and slightly sweet dark soy sauce.",
+      price: 190,
+      image: "/menu/veg_manchurian.png",
+      prepTime: 12,
+      category: "Starters",
+      isFeatured: false,
+      ingredients: ["Mixed Vegetables", "Soy Sauce", "Garlic", "Spring Onions"]
+    },
+    {
+      name: "Baby Corn Fry",
+      teluguName: "బేబీ కార్న్ ఫ్రై",
+      isVeg: true,
+      description: "Crispy baby corn fingers coated in a light batter, deep-fried to a perfect golden crunch and seasoned.",
       price: 200,
-      image: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?q=80&w=600&auto=format&fit=crop",
-      prepTime: 15,
+      image: "/menu/baby_corn_fry.png",
+      prepTime: 10,
       category: "Starters",
       isFeatured: false,
-      ingredients: ["Paneer", "Yogurt", "Bell Peppers", "Onions", "Spices"]
+      ingredients: ["Baby Corn", "Light Batter", "Spices", "Chilli Powder"]
     },
-    // Veg Curries
+
+    // --- VEG CURRIES (10) ---
     {
-      name: "Paneer Butter Masala",
-      teluguName: "పనీర్ బటర్ మసాలా",
+      name: "Gutti Vankaya Curry",
+      teluguName: "గుత్తి వంకాయ కూర",
       isVeg: true,
-      description: "Rich, creamy cottage cheese cubes simmered in a mildly sweet tomato, butter, and cashew gravy.",
-      price: 240,
-      image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=80&w=600&auto=format&fit=crop",
-      prepTime: 15,
+      description: "Andhra delicacy featuring tender brinjals stuffed with a roasted peanut, sesame, and dry coconut paste gravy.",
+      price: 220,
+      image: "/menu/gutti_vankaya_curry.png",
+      prepTime: 18,
       category: "Veg Curries",
       isFeatured: true,
-      ingredients: ["Paneer", "Butter", "Cashews", "Tomato Gravy", "Spices"]
+      ingredients: ["Tender Brinjals", "Roasted Peanuts", "Sesame Seeds", "Dry Coconut"]
     },
-    // Non-Veg Curries
+    {
+      name: "Bendakaya Fry",
+      teluguName: "బెండకాయ వేపుడు",
+      isVeg: true,
+      description: "Crispy griddled okra stir-fry tossed with fresh grated coconut, dry red chillies, and roasted peanuts.",
+      price: 180,
+      image: "/menu/bendakaya_fry.png",
+      prepTime: 12,
+      category: "Veg Curries",
+      isFeatured: false,
+      ingredients: ["Okra", "Grated Coconut", "Dry Red Chillies", "Peanuts"]
+    },
+    {
+      name: "Beerakaya Curry",
+      teluguName: "బీరకాయ కూర",
+      isVeg: true,
+      description: "Mild ridge gourd curry cooked in fresh milk and tempered with mustard seeds, lentils, and curry leaves.",
+      price: 190,
+      image: "/menu/beerakaya_curry.png",
+      prepTime: 12,
+      category: "Veg Curries",
+      isFeatured: false,
+      ingredients: ["Ridge Gourd", "Fresh Milk", "Lentils", "Mustard Seeds"]
+    },
+    {
+      name: "Dosakaya Pappu",
+      teluguName: "దోసకాయ పప్పు",
+      isVeg: true,
+      description: "Tangy Andhra style yellow dal cooked with diced yellow cucumber, green chillies, and aromatic ghee.",
+      price: 160,
+      image: "/menu/dosakaya_pappu.png",
+      prepTime: 10,
+      category: "Veg Curries",
+      isFeatured: false,
+      ingredients: ["Toor Dal", "Yellow Cucumber", "Green Chillies", "Cow Ghee"]
+    },
+    {
+      name: "Tomato Pappu",
+      teluguName: "టొమాటో పప్పు",
+      isVeg: true,
+      description: "A comforting lentil stew prepared with rich ripe tomatoes, green chillies, and tempered with garlic and cumin.",
+      price: 160,
+      image: "/menu/tomato_pappu.png",
+      prepTime: 10,
+      category: "Veg Curries",
+      isFeatured: false,
+      ingredients: ["Toor Dal", "Ripe Tomatoes", "Garlic", "Cumin Seeds"]
+    },
+    {
+      name: "Palak Paneer",
+      teluguName: "పాలక్ పన్నీర్",
+      isVeg: true,
+      description: "Soft fresh cottage cheese cubes cooked in a smooth, creamy spiced fresh spinach gravy.",
+      price: 240,
+      image: "/menu/palak_paneer.png",
+      prepTime: 15,
+      category: "Veg Curries",
+      isFeatured: false,
+      ingredients: ["Fresh Paneer", "Spinach Puree", "Cream", "Ginger"]
+    },
+    {
+      name: "Kadai Paneer",
+      teluguName: "కడాయి పన్నీర్",
+      isVeg: true,
+      description: "Paneer cubes cooked with crispy bell peppers, onions, and freshly ground kadai coriander-chilli spices.",
+      price: 250,
+      image: "/menu/kadai_paneer.png",
+      prepTime: 14,
+      category: "Veg Curries",
+      isFeatured: false,
+      ingredients: ["Cottage Cheese", "Bell Peppers", "Onions", "Kadai Spices"]
+    },
+    {
+      name: "Aloo Gobi",
+      teluguName: "ఆలూ గోబీ",
+      isVeg: true,
+      description: "A classic home-style dry curry cooked with diced potatoes and cauliflower florets with turmeric.",
+      price: 190,
+      image: "/menu/aloo_gobi.png",
+      prepTime: 12,
+      category: "Veg Curries",
+      isFeatured: false,
+      ingredients: ["Diced Potatoes", "Cauliflower", "Turmeric", "Coriander"]
+    },
+    {
+      name: "Mushroom Masala",
+      teluguName: "మష్రూమ్ మసాలా",
+      isVeg: true,
+      description: "Fresh button mushrooms cooked in a spicy, caramelized onion and tomato paste gravy.",
+      price: 240,
+      image: "/menu/mushroom_masala.png",
+      prepTime: 15,
+      category: "Veg Curries",
+      isFeatured: false,
+      ingredients: ["Button Mushrooms", "Onion Paste", "Tomatoes", "Spices"]
+    },
+    {
+      name: "Mixed Veg Curry",
+      teluguName: "మిక్స్డ్ వెజ్ కూర",
+      isVeg: true,
+      description: "A colorful assortment of carrots, peas, beans, and potatoes cooked in a mildly spiced cashew gravy.",
+      price: 210,
+      image: "/menu/mixed_veg_curry.png",
+      prepTime: 15,
+      category: "Veg Curries",
+      isFeatured: false,
+      ingredients: ["Carrots", "Peas", "Beans", "Cashew Paste"]
+    },
+
+    // --- NON-VEG CURRIES (10) ---
+    {
+      name: "Andhra Chicken Curry",
+      teluguName: "ఆంధ్రా చికెన్ కూర",
+      isVeg: false,
+      description: "Bone-in chicken slow-cooked in a rich, dry coconut, cashew, and spicy Guntur red chilli gravy.",
+      price: 290,
+      image: "/menu/andhra_chicken_curry.png",
+      prepTime: 18,
+      category: "Non-Veg Curries",
+      isFeatured: true,
+      ingredients: ["Bone-in Chicken", "Dry Coconut", "Cashew Paste", "Guntur Red Chillies"]
+    },
+    {
+      name: "Natukodi Pulusu",
+      teluguName: "నాటుకోడి పులుసు",
+      isVeg: false,
+      description: "Spicy, thin country chicken gravy cooked with free-range country chicken and hand-ground rustic spices.",
+      price: 380,
+      image: "/menu/natukodi_pulusu.png",
+      prepTime: 25,
+      category: "Non-Veg Curries",
+      isFeatured: true,
+      ingredients: ["Country Chicken", "Rustic Masala", "Tamarind Juice", "Curry Leaves"]
+    },
+    {
+      name: "Chicken Chettinad",
+      teluguName: "చికెన్ చెట్టినాడ్",
+      isVeg: false,
+      description: "Spicy, dark chicken gravy cooked with a roasted coconut paste, cardamoms, and black pepper.",
+      price: 310,
+      image: "/menu/chicken_chettinad.png",
+      prepTime: 20,
+      category: "Non-Veg Curries",
+      isFeatured: false,
+      ingredients: ["Chicken Pieces", "Roasted Coconut", "Black Pepper", "Cardamoms"]
+    },
+    {
+      name: "Mutton Curry",
+      teluguName: "మటన్ కూర",
+      isVeg: false,
+      description: "Slow-cooked tender baby goat meat simmered in a rich, traditional spiced onion and tomato gravy.",
+      price: 360,
+      image: "/menu/mutton_curry.png",
+      prepTime: 25,
+      category: "Non-Veg Curries",
+      isFeatured: false,
+      ingredients: ["Baby Goat Meat", "Onions", "Tomatoes", "Traditional Spices"]
+    },
+    {
+      name: "Mutton Rogan Josh",
+      teluguName: "మటన్ రోగన్ జోష్",
+      isVeg: false,
+      description: "Kashmiri style aromatic lamb curry cooked with dry ginger, fennel seeds, and Kashmiri red chillies.",
+      price: 380,
+      image: "/menu/mutton_rogan_josh.png",
+      prepTime: 25,
+      category: "Non-Veg Curries",
+      isFeatured: false,
+      ingredients: ["Tender Lamb", "Kashmiri Red Chillies", "Fennel Seeds", "Ginger"]
+    },
     {
       name: "Gongura Mutton",
       teluguName: "గోంగూర మటన్",
       isVeg: false,
-      description: "Tender chunks of fresh mutton slow-cooked in a tangy, sour sorrel leaves (gongura) gravy with local Guntur red chillies.",
-      price: 490,
-      image: "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=600&auto=format&fit=crop",
+      description: "Andhra specialty: Tender goat meat slow-cooked in a tangy, sour sorrel leaves (gongura) thick gravy.",
+      price: 390,
+      image: "/menu/gongura_mutton.png",
       prepTime: 25,
       category: "Non-Veg Curries",
       isFeatured: true,
-      ingredients: ["Mutton", "Gongura Leaves", "Guntur Red Chillies", "Spices"]
+      ingredients: ["Goat Meat", "Gongura Leaves", "Green Chillies", "Ghee"]
     },
     {
-      name: "Natu Kodi Pulusu",
-      teluguName: "నాటుకోడి పులుసు",
+      name: "Fish Curry",
+      teluguName: "చేపల పులుసు",
       isVeg: false,
-      description: "Country-style free-range chicken cooked in a rich, thin spicy gravy featuring hand-pounded Andhra country masalas.",
-      price: 460,
-      image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?q=80&w=600&auto=format&fit=crop",
-      prepTime: 25,
+      description: "Nellore style spicy and tangy fish curry cooked with fresh raw mango, tamarind, and local catch.",
+      price: 340,
+      image: "/menu/fish_curry.png",
+      prepTime: 20,
       category: "Non-Veg Curries",
       isFeatured: false,
-      ingredients: ["Country Chicken", "Andhra Masala", "Onions", "Spices"]
+      ingredients: ["Fresh Fish Cutlet", "Raw Mango", "Tamarind", "Spices"]
     },
     {
       name: "Royyala Iguru",
       teluguName: "రొయ్యల ఇగురు",
       isVeg: false,
-      description: "Traditional spicy prawn dry gravy cooked with caramelized onions, curry leaves, and local green chillies.",
-      price: 380,
-      image: "https://images.unsplash.com/photo-1559737607-9878a634f697?q=80&w=600&auto=format&fit=crop",
-      prepTime: 20,
+      description: "Andhra style semi-dry prawns masala cooked with green chillies, curry leaves, and local herbs.",
+      price: 360,
+      image: "/menu/royyala_iguru.png",
+      prepTime: 18,
       category: "Non-Veg Curries",
-      isFeatured: true,
-      ingredients: ["Prawns", "Onions", "Curry Leaves", "Green Chillies", "Andhra Spices"]
-    },
-    // Biryanis
-    {
-      name: "Guntur Chicken Biryani",
-      teluguName: "గుంటూరు చికెన్ బిర్యానీ",
-      isVeg: false,
-      description: "Spicy and intensely fragrant basmati rice layered with juicy chicken pieces marinated in hot Guntur chilli paste.",
-      price: 420,
-      image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?q=80&w=600&auto=format&fit=crop",
-      prepTime: 20,
-      category: "Biryanis",
-      isFeatured: true,
-      ingredients: ["Basmati Rice", "Chicken", "Guntur Chilli Paste", "Biryani Spices"]
-    },
-    {
-      name: "Ulavacharu Chicken Biryani",
-      teluguName: "ఉలవచారు చికెన్ బిర్యానీ",
-      isVeg: false,
-      description: "Slow-cooked premium basmati rice infused with traditional horse gram broth (ulavacharu), layered with spiced chicken.",
-      price: 380,
-      image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?q=80&w=600&auto=format&fit=crop",
-      prepTime: 20,
-      category: "Biryanis",
       isFeatured: false,
-      ingredients: ["Basmati Rice", "Chicken", "Horse Gram Broth", "Ghee"]
+      ingredients: ["Prawns", "Green Chillies", "Curry Leaves", "Onions"]
     },
     {
-      name: "Mutton Dum Biryani",
-      teluguName: "మటన్ దమ్ బిర్యానీ",
+      name: "Egg Curry",
+      teluguName: "కోడిగుడ్డు పులుసు",
       isVeg: false,
-      description: "Classic slow-cooked dum biryani with tender lamb chunks and premium basmati rice infused with saffron, mint, and cardamoms.",
-      price: 480,
-      image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?q=80&w=600&auto=format&fit=crop",
+      description: "Hard-boiled eggs griddled in spices and simmered in a tangy spiced onion-tomato masala gravy.",
+      price: 180,
+      image: "/menu/egg_curry.png",
+      prepTime: 12,
+      category: "Non-Veg Curries",
+      isFeatured: false,
+      ingredients: ["Boiled Eggs", "Spiced Onion Masala", "Tomatoes", "Curry Leaves"]
+    },
+    {
+      name: "Chicken Korma",
+      teluguName: "చికెన్ కుర్మా",
+      isVeg: false,
+      description: "Rich, creamy bone-in chicken curry prepared in yogurt, poppy seeds, and cashew paste base.",
+      price: 290,
+      image: "/menu/chicken_korma.png",
+      prepTime: 18,
+      category: "Non-Veg Curries",
+      isFeatured: false,
+      ingredients: ["Chicken Chunks", "Yogurt", "Poppy Seeds", "Cashew Paste"]
+    },
+
+    // --- BIRYANIS (10) ---
+    {
+      name: "Hyderabadi Dum Biryani",
+      teluguName: "హైదరాబాదీ దమ్ బిర్యానీ",
+      isVeg: false,
+      description: "Fragrant long-grain basmati rice layered with raw marinated chicken, slow-cooked in slow dum style.",
+      price: 310,
+      image: "/menu/hyderabadi_dum_biryani.png",
       prepTime: 25,
       category: "Biryanis",
       isFeatured: true,
-      ingredients: ["Basmati Rice", "Mutton", "Saffron", "Mint", "Aromatic Spices"]
+      ingredients: ["Long-grain Basmati", "Raw Chicken", "Saffron", "Mint", "Ghee"]
+    },
+    {
+      name: "Chicken Biryani",
+      teluguName: "చికెన్ బిర్యానీ",
+      isVeg: false,
+      description: "Aromatic basmati rice layered with pre-cooked spiced chicken, slow-cooked in low dum style.",
+      price: 290,
+      image: "/menu/chicken_biryani.png",
+      prepTime: 22,
+      category: "Biryanis",
+      isFeatured: false,
+      ingredients: ["Basmati Rice", "Cooked Spiced Chicken", "Biryani Spices", "Ghee"]
+    },
+    {
+      name: "Mutton Biryani",
+      teluguName: "మటన్ బిర్యానీ",
+      isVeg: false,
+      description: "Rich traditional mutton biryani layered with long-grain rice, tender goat chunks, and saffron.",
+      price: 360,
+      image: "/menu/mutton_biryani.png",
+      prepTime: 25,
+      category: "Biryanis",
+      isFeatured: true,
+      ingredients: ["Basmati Rice", "Tender Goat Meat", "Saffron Milk", "Aromatic Herbs"]
     },
     {
       name: "Prawns Biryani",
       teluguName: "రొయ్యల బిర్యానీ",
       isVeg: false,
-      description: "Delicate basmati rice layered with spiced fresh prawns, coriander, mint, cardamoms, and pure ghee.",
-      price: 440,
-      image: "https://images.unsplash.com/photo-1633945274405-b6c8069047b0?q=80&w=600&auto=format&fit=crop",
+      description: "Basmati rice layered with marinated spiced prawns, cooked in dum style with cardamom.",
+      price: 380,
+      image: "/menu/prawns_biryani.png",
       prepTime: 20,
       category: "Biryanis",
       isFeatured: false,
-      ingredients: ["Basmati Rice", "Prawns", "Pure Ghee", "Coriander", "Mint"]
+      ingredients: ["Basmati Rice", "Marinated Prawns", "Cardamom", "Biryani Spices"]
     },
-    // Rice Items
     {
-      name: "Steamed Rice",
-      teluguName: "అన్నం",
+      name: "Fish Biryani",
+      teluguName: "చేపల బిర్యానీ",
+      isVeg: false,
+      description: "Long-grain rice cooked in dum style with crispy deep-fried boneless fish fillets and local herbs.",
+      price: 360,
+      image: "/menu/fish_biryani.png",
+      prepTime: 22,
+      category: "Biryanis",
+      isFeatured: false,
+      ingredients: ["Basmati Rice", "Boneless Fish Fillets", "Spices", "Herbs"]
+    },
+    {
+      name: "Egg Biryani",
+      teluguName: "గుడ్డు బిర్యానీ",
+      isVeg: false,
+      description: "Fragrant basmati rice layered with hard-boiled eggs tossed in a spicy masala paste.",
+      price: 220,
+      image: "/menu/egg_biryani.png",
+      prepTime: 15,
+      category: "Biryanis",
+      isFeatured: false,
+      ingredients: ["Basmati Rice", "Hard-boiled Eggs", "Masala Paste", "Saffron"]
+    },
+    {
+      name: "Paneer Biryani",
+      teluguName: "పన్నీర్ బిర్యానీ",
       isVeg: true,
-      description: "Steamed premium sona masoori rice, served piping hot with fresh ghee and tomato pappu option.",
+      description: "Aromatic basmati rice cooked in dum style with soft spiced cottage cheese cubes.",
+      price: 260,
+      image: "/menu/paneer_biryani.png",
+      prepTime: 18,
+      category: "Biryanis",
+      isFeatured: false,
+      ingredients: ["Basmati Rice", "Cottage Cheese", "Yogurt", "Biryani Masala"]
+    },
+    {
+      name: "Veg Biryani",
+      teluguName: "వెజ్ బిర్యానీ",
+      isVeg: true,
+      description: "Fragrant rice layered with spiced garden-fresh carrots, beans, peas, and potatoes.",
+      price: 240,
+      image: "/menu/veg_biryani.png",
+      prepTime: 18,
+      category: "Biryanis",
+      isFeatured: false,
+      ingredients: ["Basmati Rice", "Carrots", "Beans", "Peas", "Potatoes"]
+    },
+    {
+      name: "Chicken 65 Biryani",
+      teluguName: "చికెన్ 65 బిర్యానీ",
+      isVeg: false,
+      description: "Long-grain aromatic rice layered and served with hot, spicy, deep-fried Chicken 65 pieces.",
+      price: 320,
+      image: "/menu/chicken_65_biryani.png",
+      prepTime: 20,
+      category: "Biryanis",
+      isFeatured: true,
+      ingredients: ["Basmati Rice", "Chicken 65 Pieces", "Spicy Gravy", "Ghee"]
+    },
+    {
+      name: "Ulavacharu Biryani",
+      teluguName: "ఉలవచారు బిర్యానీ",
+      isVeg: false,
+      description: "Andhra specialty: Dum biryani cooked with horse gram soup (ulavacharu) and chicken pieces.",
+      price: 320,
+      image: "/menu/ulavacharu_biryani.png",
+      prepTime: 24,
+      category: "Biryanis",
+      isFeatured: false,
+      ingredients: ["Basmati Rice", "Horse Gram Soup", "Spiced Chicken", "Cow Ghee"]
+    },
+
+    // --- RICE ITEMS (10) ---
+    {
+      name: "Plain Rice",
+      teluguName: "సన్న బియ్యం అన్నం",
+      isVeg: true,
+      description: "Steamed premium aged Sona Masoori rice, served fluffy and hot.",
       price: 80,
-      image: "https://images.unsplash.com/photo-1516685018646-549198525c1b?q=80&w=600&auto=format&fit=crop",
+      image: "/menu/plain_rice.png",
+      prepTime: 8,
+      category: "Rice Items",
+      isFeatured: false,
+      ingredients: ["Aged Sona Masoori"]
+    },
+    {
+      name: "Jeera Rice",
+      teluguName: "జీరా రైస్",
+      isVeg: true,
+      description: "Premium basmati rice stir-fried with roasted cumin seeds and aromatic cow ghee.",
+      price: 140,
+      image: "/menu/jeera_rice.png",
       prepTime: 10,
       category: "Rice Items",
       isFeatured: false,
-      ingredients: ["Sona Masoori Rice", "Water"]
+      ingredients: ["Basmati Rice", "Cumin Seeds", "Cow Ghee"]
+    },
+    {
+      name: "Lemon Rice",
+      teluguName: "నిమ్మకాయ అన్నం",
+      isVeg: true,
+      description: "Tangy rice preparation tempered with yellow split chickpeas, mustard, green chillies, peanuts, and fresh lemon juice.",
+      price: 130,
+      image: "/menu/lemon_rice.png",
+      prepTime: 10,
+      category: "Rice Items",
+      isFeatured: false,
+      ingredients: ["Steamed Rice", "Lemon Juice", "Peanuts", "Yellow Split Chickpeas"]
+    },
+    {
+      name: "Tomato Rice",
+      teluguName: "టొమాటో అన్నం",
+      isVeg: true,
+      description: "Fragrant basmati rice cooked with fresh tomatoes, ginger, and Southern temperings.",
+      price: 130,
+      image: "/menu/tomato_rice.png",
+      prepTime: 10,
+      category: "Rice Items",
+      isFeatured: false,
+      ingredients: ["Basmati Rice", "Fresh Tomatoes", "Ginger", "Southern Spices"]
+    },
+    {
+      name: "Coconut Rice",
+      teluguName: "కొబ్బరి అన్నం",
+      isVeg: true,
+      description: "Aromatic steamed rice tossed with fresh grated dry-coconut, cashews, and curry leaves.",
+      price: 150,
+      image: "/menu/coconut_rice.png",
+      prepTime: 12,
+      category: "Rice Items",
+      isFeatured: false,
+      ingredients: ["Steamed Rice", "Fresh Grated Coconut", "Cashews", "Curry Leaves"]
+    },
+    {
+      name: "Pulihora",
+      teluguName: "चिంతపండు పులిహోర",
+      isVeg: true,
+      description: "Traditional festive tamarind rice preparation tempered with split lentils, mustard, peanuts, and asafoetida.",
+      price: 140,
+      image: "/menu/pulihora.png",
+      prepTime: 12,
+      category: "Rice Items",
+      isFeatured: true,
+      ingredients: ["Steamed Rice", "Tamarind Paste", "Peanuts", "Mustard", "Asafoetida"]
     },
     {
       name: "Curd Rice",
       teluguName: "దద్దోజనం",
       isVeg: true,
-      description: "Soft cooked rice mixed with fresh yogurt and tempered with mustard seeds, curry leaves, and green chillies.",
-      price: 120,
-      image: "https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?q=80&w=600&auto=format&fit=crop",
-      prepTime: 5,
+      description: "Comforting steamed rice mixed with fresh curd and milk, tempered with mustard, ginger, and curry leaves.",
+      price: 110,
+      image: "/menu/curd_rice.png",
+      prepTime: 8,
       category: "Rice Items",
       isFeatured: false,
-      ingredients: ["Rice", "Fresh Yogurt", "Mustard Seeds", "Curry Leaves", "Green Chillies"]
+      ingredients: ["Steamed Rice", "Fresh Curd", "Ginger", "Curry Leaves"]
     },
-    // Tiffins
     {
-      name: "Pesarattu",
-      teluguName: "పెసరట్టు",
+      name: "Veg Fried Rice",
+      teluguName: "వెజ్ ఫ్రైడ్ రైస్",
       isVeg: true,
-      description: "Nutritious whole green gram crepe topped with finely chopped onions, ginger, and green chillies, served with ginger chutney.",
-      price: 140,
-      image: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?q=80&w=600&auto=format&fit=crop",
-      prepTime: 10,
-      category: "Tiffins",
+      description: "Stir-fried basmati rice cooked in a wok with finely chopped carrots, beans, cabbage, and soy sauce.",
+      price: 160,
+      image: "/menu/veg_fried_rice.png",
+      prepTime: 12,
+      category: "Rice Items",
       isFeatured: false,
-      ingredients: ["Green Gram", "Ginger", "Green Chillies", "Onions", "Ginger Chutney"]
+      ingredients: ["Basmati Rice", "Carrots", "Beans", "Cabbage", "Soy Sauce"]
     },
+    {
+      name: "Egg Fried Rice",
+      teluguName: "ఎగ్ ఫ్రైడ్ రైస్",
+      isVeg: false,
+      description: "Wok-tossed stir-fried basmati rice with scrambled eggs, white pepper, and spring onions.",
+      price: 180,
+      image: "/menu/egg_fried_rice.png",
+      prepTime: 12,
+      category: "Rice Items",
+      isFeatured: false,
+      ingredients: ["Basmati Rice", "Scrambled Eggs", "Spring Onions", "White Pepper"]
+    },
+    {
+      name: "Chicken Fried Rice",
+      teluguName: "చికెన్ ఫ్రైడ్ రైస్",
+      isVeg: false,
+      description: "Wok-tossed stir-fried basmati rice with shredded chicken chunks, eggs, and light soy sauce.",
+      price: 210,
+      image: "/menu/chicken_fried_rice.png",
+      prepTime: 14,
+      category: "Rice Items",
+      isFeatured: true,
+      ingredients: ["Basmati Rice", "Shredded Chicken", "Scrambled Eggs", "Soy Sauce"]
+    },
+
+    // --- TIFFINS (10) ---
     {
       name: "Idli",
       teluguName: "ఇడ్లీ",
       isVeg: true,
-      description: "Steamed soft rice-lentil cakes served with peanut chutney, ginger chutney, and fresh sambar.",
+      description: "Soft, fluffy steamed rice cakes made from fermented rice-lentil batter, served with coconut chutney and sambar.",
       price: 80,
-      image: "https://images.unsplash.com/photo-1589302168068-9646c49d4d67?q=80&w=600&auto=format&fit=crop",
+      image: "/menu/idli.png",
       prepTime: 5,
       category: "Tiffins",
       isFeatured: false,
-      ingredients: ["Rice Batter", "Urad Dal", "Peanut Chutney", "Sambar"]
+      ingredients: ["Rice-Lentil Batter", "Coconut Chutney", "Sambar"]
     },
     {
-      name: "Ghee Dosa",
-      teluguName: "నెయ్యి దోశ",
+      name: "Ghee Karam Idli",
+      teluguName: "నెయ్యి కారం ఇడ్లీ",
       isVeg: true,
-      description: "Crispy rice-lentil crepe griddled with pure desi ghee, served with coconut chutney and sambar.",
-      price: 120,
-      image: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?q=80&w=600&auto=format&fit=crop",
-      prepTime: 8,
+      description: "Fluffy steamed idlis coated with pure cow ghee and spiced Guntur red chilli podi.",
+      price: 100,
+      image: "/menu/ghee_karam_idli.png",
+      prepTime: 7,
       category: "Tiffins",
       isFeatured: true,
-      ingredients: ["Dosa Batter", "Desi Ghee", "Coconut Chutney", "Sambar"]
+      ingredients: ["Steamed Idlis", "Cow Ghee", "Guntur Karam Podi"]
+    },
+    {
+      name: "Dosa",
+      teluguName: "దోశ",
+      isVeg: true,
+      description: "Crispy griddled thin crepe made of fermented rice-lentil batter, griddled with butter.",
+      price: 90,
+      image: "/menu/dosa.png",
+      prepTime: 8,
+      category: "Tiffins",
+      isFeatured: false,
+      ingredients: ["Fermented Batter", "Butter", "Chutney"]
+    },
+    {
+      name: "Masala Dosa",
+      teluguName: "మసాలా దోశ",
+      isVeg: true,
+      description: "Crispy griddled crepe stuffed with a spiced potato and onion mash, served with ginger chutney.",
+      price: 110,
+      image: "/menu/masala_dosa.png",
+      prepTime: 10,
+      category: "Tiffins",
+      isFeatured: true,
+      ingredients: ["Fermented Dosa Batter", "Spiced Potato Mash", "Chutney", "Sambar"]
+    },
+    {
+      name: "Pesarattu",
+      teluguName: "పెసరట్టు",
+      isVeg: true,
+      description: "High-protein griddled crepe made of whole green gram batter, seasoned with ginger and cumin.",
+      price: 110,
+      image: "/menu/pesarattu.png",
+      prepTime: 10,
+      category: "Tiffins",
+      isFeatured: false,
+      ingredients: ["Whole Green Gram Batter", "Ginger", "Cumin", "Onions"]
     },
     {
       name: "Upma",
       teluguName: "ఉప్మా",
       isVeg: true,
-      description: "Roasted semolina cooked with carrots, green peas, cashews, and ghee, served with peanut chutney.",
-      price: 90,
-      image: "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?q=80&w=600&auto=format&fit=crop",
+      description: "Warm semolina porridge cooked with split lentils, green chillies, ginger, and vegetables.",
+      price: 70,
+      image: "/menu/upma.png",
       prepTime: 7,
       category: "Tiffins",
       isFeatured: false,
-      ingredients: ["Semolina", "Carrots", "Green Peas", "Cashews", "Desi Ghee"]
+      ingredients: ["Semolina", "Lentils", "Ginger", "Vegetables"]
     },
-    // Snacks
+    {
+      name: "Poori",
+      teluguName: "పూరి",
+      isVeg: true,
+      description: "Deep-fried puffed whole wheat flatbreads served with a spiced potato-onion curry.",
+      price: 90,
+      image: "/menu/poori.png",
+      prepTime: 8,
+      category: "Tiffins",
+      isFeatured: false,
+      ingredients: ["Wheat Dough", "Potato Curry", "Spices"]
+    },
+    {
+      name: "Pongal",
+      teluguName: "పొంగలి",
+      isVeg: true,
+      description: "Creamy rice and split yellow lentil dish tempered with black pepper, cumin, ginger, and ghee.",
+      price: 100,
+      image: "/menu/pongal.png",
+      prepTime: 8,
+      category: "Tiffins",
+      isFeatured: false,
+      ingredients: ["Steamed Rice", "Yellow Lentils", "Black Pepper", "Cow Ghee"]
+    },
+    {
+      name: "Rava Dosa",
+      teluguName: "రవ్వ దోశ",
+      isVeg: true,
+      description: "Crispy, lacy griddled crepe made of semolina, rice flour, green chillies, and cumin.",
+      price: 110,
+      image: "/menu/rava_dosa.png",
+      prepTime: 10,
+      category: "Tiffins",
+      isFeatured: false,
+      ingredients: ["Semolina", "Rice Flour", "Cumin", "Green Chillies"]
+    },
+    {
+      name: "Uttapam",
+      teluguName: "ఉతప్పం",
+      isVeg: true,
+      description: "Thick griddled pancake made of dosa batter topped with finely chopped onions, chillies, and tomatoes.",
+      price: 100,
+      image: "/menu/uttapam.png",
+      prepTime: 10,
+      category: "Tiffins",
+      isFeatured: false,
+      ingredients: ["Dosa Batter", "Chopped Onions", "Tomatoes", "Green Chillies"]
+    },
+
+    // --- SNACKS (10) ---
     {
       name: "Punugulu",
       teluguName: "పునుగులు",
       isVeg: true,
-      description: "Crisp, deep-fried fritters made of fermented rice-urad dal batter, served with spicy ginger chutney.",
-      price: 99,
-      image: "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?q=80&w=600&auto=format&fit=crop",
-      prepTime: 10,
+      description: "Crisp, golden-brown deep-fried bondas made of fermented rice batter, served with spicy tomato chutney.",
+      price: 80,
+      image: "/menu/punugulu.png",
+      prepTime: 6,
       category: "Snacks",
-      isFeatured: true,
-      ingredients: ["Rice Batter", "Urad Dal", "Ginger Chutney", "Oil"]
+      isFeatured: false,
+      ingredients: ["Rice Batter", "Onions", "Green Chutney"]
     },
     {
       name: "Mirchi Bajji",
-      teluguName: "మిర్చి బజ్జీ",
+      teluguName: "మిర్చి బజ్జి",
       isVeg: true,
-      description: "Deep-fried batter coated banana chillies stuffed with onion, lemon juice, and chaat spices.",
-      price: 110,
-      image: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?q=80&w=600&auto=format&fit=crop",
+      description: "Deep-fried large green chilli fritters stuffed with seasoned chopped onions, coriander, and lemon juice.",
+      price: 100,
+      image: "/menu/mirchi_bajji.png",
+      prepTime: 12,
+      category: "Snacks",
+      isFeatured: true,
+      ingredients: ["Banana Chillies", "Gram Flour", "Onions", "Lemon Juice"]
+    },
+    {
+      name: "Onion Pakoda",
+      teluguName: "ఉల్లిపాయ పకోడీ",
+      isVeg: true,
+      description: "Crispy fried fritters prepared with sliced onions, gram flour, green chillies, and curry leaves.",
+      price: 90,
+      image: "/menu/onion_pakoda.png",
       prepTime: 10,
       category: "Snacks",
       isFeatured: false,
-      ingredients: ["Banana Chillies", "Gram Flour", "Onions", "Lemon Juice", "Oil"]
+      ingredients: ["Sliced Onions", "Gram Flour", "Green Chillies", "Curry Leaves"]
     },
-    // Desserts
     {
-      name: "Bobbatlu",
-      teluguName: "బొబ్బట్లు",
+      name: "Masala Vada",
+      teluguName: "మసాలా వడ",
       isVeg: true,
-      description: "Sweet delicate flatbread filled with sweet split chickpea-jaggery cardamoms paste, griddled with pure desi ghee.",
+      description: "Crisp deep-fried patties made of coarsely ground Bengal gram, green chillies, ginger, and curry leaves.",
       price: 90,
-      image: "https://images.unsplash.com/photo-1587314168485-3236d6710814?q=80&w=600&auto=format&fit=crop",
-      prepTime: 8,
-      category: "Desserts",
-      isFeatured: true,
-      ingredients: ["Bengal Gram", "Jaggery", "All-purpose Flour", "Desi Ghee", "Cardamom"]
+      image: "/menu/masala_vada.png",
+      prepTime: 10,
+      category: "Snacks",
+      isFeatured: false,
+      ingredients: ["Bengal Gram", "Green Chillies", "Ginger", "Curry Leaves"]
     },
+    {
+      name: "Garelu",
+      teluguName: "గారెలు",
+      isVeg: true,
+      description: "Crispy golden fried black lentil donuts served with fresh coconut chutney.",
+      price: 90,
+      image: "/menu/garelu.png",
+      prepTime: 10,
+      category: "Snacks",
+      isFeatured: false,
+      ingredients: ["Black Lentils", "Black Pepper", "Coconut Chutney"]
+    },
+    {
+      name: "Samosa",
+      teluguName: "సమోసా",
+      isVeg: true,
+      description: "Crisp flaky pastry triangles filled with a spiced green pea and potato mash.",
+      price: 80,
+      image: "/menu/samosa.png",
+      prepTime: 10,
+      category: "Snacks",
+      isFeatured: false,
+      ingredients: ["Wheat Pastry", "Potato Mash", "Green Peas", "Spices"]
+    },
+    {
+      name: "Corn Cutlet",
+      teluguName: "కార్న్ కట్లెట్",
+      isVeg: true,
+      description: "Shallow-fried patties made of sweet corn, potato, breadcrumbs, and Southern dry spices.",
+      price: 110,
+      image: "/menu/corn_cutlet.png",
+      prepTime: 12,
+      category: "Snacks",
+      isFeatured: false,
+      ingredients: ["Sweet Corn", "Potato Mash", "Breadcrumbs", "Spices"]
+    },
+    {
+      name: "Veg Roll",
+      teluguName: "వెజ్ రోల్",
+      isVeg: true,
+      description: "Griddled flatbread wrapped around stir-fried seasonal vegetables and sweet tomato sauce.",
+      price: 120,
+      image: "/menu/veg_roll.png",
+      prepTime: 12,
+      category: "Snacks",
+      isFeatured: false,
+      ingredients: ["Flatbread Wrapper", "Stir-fried Vegetables", "Tomato Sauce"]
+    },
+    {
+      name: "Spring Roll",
+      teluguName: "స్ప్రింగ్ రోల్",
+      isVeg: true,
+      description: "Crisp deep-fried wrapper rolls filled with spiced stir-fried vegetables and served with sweet chilli sauce.",
+      price: 130,
+      image: "/menu/spring_roll.png",
+      prepTime: 12,
+      category: "Snacks",
+      isFeatured: false,
+      ingredients: ["Spring Roll Wrappers", "Spiced Stir-fried Vegetables", "Sweet Chilli Sauce"]
+    },
+    {
+      name: "Bread Pakoda",
+      teluguName: "బ్రెడ్ పకోడీ",
+      isVeg: true,
+      description: "Deep-fried spiced potato sandwiches coated in a savory gram flour batter.",
+      price: 100,
+      image: "/menu/bread_pakoda.png",
+      prepTime: 12,
+      category: "Snacks",
+      isFeatured: false,
+      ingredients: ["Bread Slices", "Gram Flour Batter", "Potato Mash", "Dry Spices"]
+    },
+
+    // --- DESSERTS (10) ---
     {
       name: "Double Ka Meetha",
       teluguName: "డబుల్ కా మీఠా",
       isVeg: true,
-      description: "Traditional Hyderabadi fried-bread dessert soaked in saffron-infused milk syrup, garnished with ghee-fried almonds and cashews.",
-      price: 120,
-      image: "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?q=80&w=600&auto=format&fit=crop",
-      prepTime: 10,
+      description: "Hyderabadi classic bread pudding made of ghee-fried bread slices soaked in saffron milk and dry fruits.",
+      price: 140,
+      image: "/menu/double_ka_meetha.png",
+      prepTime: 15,
       category: "Desserts",
       isFeatured: false,
-      ingredients: ["Bread Slices", "Saffron Milk", "Sugar Syrup", "Almonds", "Cashews"]
+      ingredients: ["Bread Slices", "Saffron Milk", "Sugar Syrup", "Dry Fruits"]
+    },
+    {
+      name: "Qubani Ka Meetha",
+      teluguName: "ఖుబానీ కా మీఠా",
+      isVeg: true,
+      description: "Traditional Hyderabadi dessert made from dried apricots stewed with honey, served with fresh cream.",
+      price: 150,
+      image: "/menu/qubani_ka_meetha.png",
+      prepTime: 15,
+      category: "Desserts",
+      isFeatured: true,
+      ingredients: ["Dried Apricots", "Honey", "Fresh Cream", "Almond slivers"]
+    },
+    {
+      name: "Apricot Delight",
+      teluguName: "ఆప్రికాట్ డిలైట్",
+      isVeg: true,
+      description: "A premium dessert made of sponge cake layered with a rich stewed apricot puree and fresh whipped cream.",
+      price: 160,
+      image: "/menu/apricot_delight.png",
+      prepTime: 15,
+      category: "Desserts",
+      isFeatured: true,
+      ingredients: ["Sponge Cake", "Apricot Puree", "Whipped Cream"]
     },
     {
       name: "Gulab Jamun",
-      teluguName: "గులాబ్ జామున్",
+      teluguName: "గులాబ్ జామూన్",
       isVeg: true,
-      description: "Soft, golden-brown berry-sized balls made of milk solids, soaked in warm cardamom sugar syrup.",
-      price: 100,
-      image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?q=80&w=600&auto=format&fit=crop",
-      prepTime: 5,
+      description: "Golden fried milk-solid dumplings soaked in a hot sugar syrup flavored with green cardamom and rose water.",
+      price: 110,
+      image: "/menu/gulab_jamun.png",
+      prepTime: 10,
       category: "Desserts",
       isFeatured: false,
-      ingredients: ["Milk Solids", "Sugar Syrup", "Cardamom"]
+      ingredients: ["Milk Solids", "Cardamom", "Rose Water", "Sugar Syrup"]
     },
-    // Beverages
+    {
+      name: "Rasmalai",
+      teluguName: "రసమలై",
+      isVeg: true,
+      description: "Spongy, sweet cottage cheese discs soaked in a rich, chilled saffron milk base, garnished with pistachios.",
+      price: 130,
+      image: "/menu/rasmalai.png",
+      prepTime: 10,
+      category: "Desserts",
+      isFeatured: false,
+      ingredients: ["Cottage Cheese Discs", "Saffron Milk", "Pistachios"]
+    },
+    {
+      name: "Kaju Katli",
+      teluguName: "కాజు కట్లి",
+      isVeg: true,
+      description: "Diamond-shaped rich fudge sweets prepared with cashews, sugar syrup, and ghee.",
+      price: 140,
+      image: "/menu/kaju_katli.png",
+      prepTime: 10,
+      category: "Desserts",
+      isFeatured: false,
+      ingredients: ["Cashews", "Sugar Syrup", "Pure Ghee"]
+    },
+    {
+      name: "Bobbatlu",
+      teluguName: "బొబ్బట్లు",
+      isVeg: true,
+      description: "Sweet delicate flatbread stuffed with sweet split chickpea-jaggery cardamoms paste, griddled with desi ghee.",
+      price: 130,
+      image: "/menu/bobbatlu.png",
+      prepTime: 12,
+      category: "Desserts",
+      isFeatured: false,
+      ingredients: ["Bengal Gram", "Jaggery", "All-purpose Flour", "Desi Ghee"]
+    },
+    {
+      name: "Pootharekulu",
+      teluguName: "పూతరేకులు",
+      isVeg: true,
+      description: "Paper-thin, translucent sweet sheets made of rice starch, layered with pure ghee, sugar, and dry fruits.",
+      price: 150,
+      image: "/menu/pootharekulu.png",
+      prepTime: 8,
+      category: "Desserts",
+      isFeatured: true,
+      ingredients: ["Rice Starch Sheets", "Pure Ghee", "Powdered Sugar", "Dry Fruits"]
+    },
+    {
+      name: "Payasam",
+      teluguName: "పాయసం",
+      isVeg: true,
+      description: "Creamy traditional rice pudding cooked with fresh milk, organic jaggery, cardamom, and cashews.",
+      price: 120,
+      image: "/menu/payasam.png",
+      prepTime: 12,
+      category: "Desserts",
+      isFeatured: false,
+      ingredients: ["Rice", "Fresh Milk", "Organic Jaggery", "Cardamom"]
+    },
+    {
+      name: "Semiya Kheer",
+      teluguName: "సేమియా ఖీర్",
+      isVeg: true,
+      description: "Sweet milk pudding prepared with ghee-roasted vermicelli noodles, sugar, raisins, and cardamoms.",
+      price: 120,
+      image: "/menu/semiya_kheer.png",
+      prepTime: 12,
+      category: "Desserts",
+      isFeatured: false,
+      ingredients: ["Vermicelli", "Fresh Milk", "Sugar Syrup", "Cardamoms"]
+    },
+
+    // --- BEVERAGES (10) ---
+    {
+      name: "Irani Chai",
+      teluguName: "ఇరానీ ఛాయ్",
+      isVeg: true,
+      description: "Hyderabadi style rich, creamy, thick slow-brewed tea, served piping hot.",
+      price: 60,
+      image: "/menu/irani_chai.png",
+      prepTime: 5,
+      category: "Beverages",
+      isFeatured: false,
+      ingredients: ["Brewed Tea Leaves", "Condense Milk", "Spices"]
+    },
     {
       name: "Filter Coffee",
       teluguName: "ఫిల్టర్ కాఫీ",
       isVeg: true,
-      description: "South Indian filter coffee frothed with boiling hot milk and poured dynamically from brass dabarah and tumbler.",
-      price: 60,
-      image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=600&auto=format&fit=crop",
-      prepTime: 5,
+      description: "Strong decoction filter coffee brewed with milk and served foaming in a traditional brass tumbler.",
+      price: 80,
+      image: "/menu/filter_coffee.png",
+      prepTime: 6,
       category: "Beverages",
-      isFeatured: false,
-      ingredients: ["Coffee Powder", "Chicory", "Milk", "Sugar"]
+      isFeatured: true,
+      ingredients: ["Coffee Powder", "Milk", "Sugar"]
     },
     {
       name: "Badam Milk",
-      teluguName: "బాదాం పాలు",
+      teluguName: "బాదం పాలు",
       isVeg: true,
-      description: "Creamy, chilled milk slow-simmered with almond paste, saffron threads, and green cardamom, garnished with nut slivers.",
-      price: 80,
-      image: "https://images.unsplash.com/photo-1541658016709-82535e94bc69?q=80&w=600&auto=format&fit=crop",
+      description: "Sweetened chilled milk slow-brewed with almond paste, saffron threads, and cardamom.",
+      price: 90,
+      image: "/menu/badam_milk.png",
       prepTime: 5,
       category: "Beverages",
       isFeatured: false,
-      ingredients: ["Milk", "Almond Paste", "Saffron", "Cardamom", "Nuts"]
+      ingredients: ["Sweetened Milk", "Almond Paste", "Saffron", "Cardamom"]
+    },
+    {
+      name: "Rose Milk",
+      teluguName: "రోజ్ మిల్క్",
+      isVeg: true,
+      description: "Chilled fresh milk flavored with a sweet organic rose syrup and served refreshing.",
+      price: 90,
+      image: "/menu/rose_milk.png",
+      prepTime: 5,
+      category: "Beverages",
+      isFeatured: false,
+      ingredients: ["Fresh Milk", "Organic Rose Syrup"]
     },
     {
       name: "Fresh Lime Soda",
       teluguName: "ఫ్రెష్ లైమ్ సోడా",
       isVeg: true,
-      description: "Refreshing bubbly soda mixed with freshly squeezed lime juice, salt, and sugar syrup, served chilled.",
+      description: "Refreshing carbonated lemonade served sweet, salted, or mixed with fresh lime juice.",
       price: 70,
-      image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=600&auto=format&fit=crop",
-      prepTime: 4,
+      image: "/menu/fresh_lime_soda.png",
+      prepTime: 5,
       category: "Beverages",
       isFeatured: false,
-      ingredients: ["Lime Juice", "Soda", "Sugar Syrup", "Salt", "Ice"]
+      ingredients: ["Lime Juice", "Soda", "Sugar Syrup", "Mint Leaves"]
+    },
+    {
+      name: "Mango Lassi",
+      teluguName: "మ్యాంగో లస్సీ",
+      isVeg: true,
+      description: "Thick creamy yogurt shake blended with fresh Alphonso mango pulp and cardamom.",
+      price: 110,
+      image: "/menu/mango_lassi.png",
+      prepTime: 6,
+      category: "Beverages",
+      isFeatured: true,
+      ingredients: ["Thick Yogurt", "Alphonso Mango Pulp", "Cardamom"]
+    },
+    {
+      name: "Sweet Lassi",
+      teluguName: "స్వీట్ లస్సీ",
+      isVeg: true,
+      description: "A traditional thick, sweet churned yogurt shake garnished with fresh malai.",
+      price: 90,
+      image: "/menu/sweet_lassi.png",
+      prepTime: 5,
+      category: "Beverages",
+      isFeatured: false,
+      ingredients: ["Thick Yogurt", "Sugar Syrup", "Fresh Malai"]
+    },
+    {
+      name: "Buttermilk",
+      teluguName: "మజ్జిగ",
+      isVeg: true,
+      description: "Comforting thin yogurt beverage churned with fresh coriander, ginger, green chillies, and curry leaves.",
+      price: 60,
+      image: "/menu/buttermilk.png",
+      prepTime: 5,
+      category: "Beverages",
+      isFeatured: false,
+      ingredients: ["Churned Yogurt", "Coriander", "Ginger", "Curry Leaves"]
+    },
+    {
+      name: "Watermelon Juice",
+      teluguName: "పుచ్చకాయ రసం",
+      isVeg: true,
+      description: "Freshly pressed sweet watermelon juice served chilled with fresh mint leaf.",
+      price: 90,
+      image: "/menu/watermelon_juice.png",
+      prepTime: 5,
+      category: "Beverages",
+      isFeatured: false,
+      ingredients: ["Sweet Watermelon Juice", "Mint Leaf"]
+    },
+    {
+      name: "Sugarcane Juice",
+      teluguName: "చెరకు రసం",
+      isVeg: true,
+      description: "Freshly pressed sugarcane juice served chilled with green lime juice and ginger.",
+      price: 80,
+      image: "/menu/sugarcane_juice.png",
+      prepTime: 5,
+      category: "Beverages",
+      isFeatured: false,
+      ingredients: ["Sugarcane Juice", "Lime Juice", "Ginger"]
     }
   ];
 
@@ -489,22 +1282,21 @@ async function main() {
       },
     });
 
-    // Seed ingredients for this item (Inventory preparation layer)
     for (const ingName of item.ingredients) {
       await prisma.menuItemIngredient.create({
         data: {
           menuItemId: dbItem.id,
           name: ingName,
-          quantity: 100, // Seed placeholder quantity
+          quantity: 100,
           unit: "grams",
           isAvailable: true,
         }
       });
     }
   }
-  console.log("Menu items and ingredients list successfully seeded.");
+  console.log("90 Menu items and ingredients list successfully seeded.");
 
-  // 7. Seed Featured Reviews for the Homepage testimonials
+  // 7. Seed Featured Reviews
   console.log("Seeding Reviews...");
   await prisma.review.deleteMany({});
   const reviewSeeds = [

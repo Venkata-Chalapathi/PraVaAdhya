@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { verifyJWT } from "@/lib/auth-crypto";
 import { saveImage } from "@/lib/storage";
+import { handleDbError } from "@/lib/db-error-logging";
 
 // GET: Retrieve all active configurations
 export async function GET() {
@@ -38,7 +39,7 @@ export async function GET() {
 
     return NextResponse.json(config);
   } catch (error) {
-    console.error("Error reading settings:", error);
+    handleDbError("GET /api/settings", error);
     return NextResponse.json(
       { gst_percentage: "0", delivery_fee: "0", restaurant_name: "PraVaDhya Foods" },
       { status: 200 }
@@ -95,7 +96,7 @@ export async function PUT(request: Request) {
       message: "Platform settings updated successfully.",
     });
   } catch (error) {
-    console.error("Error updating settings:", error);
+    handleDbError("PUT /api/settings", error);
     return NextResponse.json(
       { error: "Failed to update dynamic settings." },
       { status: 500 }

@@ -1,15 +1,26 @@
+import fs from "fs";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// Create connection pool and driver adapter for PostgreSQL (Prisma 7 requirement)
-const connectionString = process.env.DATABASE_URL;
-const pool = new pg.Pool({ connectionString });
-const adapter = new PrismaPg(pool);
+const connectionString = process.env.DATABASE_URL!;
+
+const adapter = new PrismaPg({
+  connectionString,
+  ssl: fs.existsSync("./supabase-ca.crt")
+    ? {
+        ca: fs.readFileSync("./supabase-ca.crt").toString(),
+      }
+    : {
+        rejectUnauthorized: false,
+      },
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+});
 
 export const prisma =
   globalForPrisma.prisma ??

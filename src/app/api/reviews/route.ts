@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { handleDbError } from "@/lib/db-error-logging";
 
 const reviewSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
     });
     return NextResponse.json({ success: true, reviews });
   } catch (error) {
-    console.error("Failed to fetch public reviews:", error);
+    handleDbError("GET /api/reviews", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch testimonials." },
       { status: 500 }
@@ -107,7 +108,7 @@ export async function POST(request: Request) {
       review,
     });
   } catch (error) {
-    console.error("Failed to submit review:", error);
+    handleDbError("POST /api/reviews", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, message: "Validation failed.", errors: error.flatten().fieldErrors },

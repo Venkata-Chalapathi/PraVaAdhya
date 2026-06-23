@@ -35,7 +35,7 @@ export async function GET() {
     let itemsSample: any[] = [];
     try {
       itemsSample = await prisma.menuItem.findMany({
-        take: 3,
+        take: 5,
         include: { category: true }
       });
     } catch (e: any) {

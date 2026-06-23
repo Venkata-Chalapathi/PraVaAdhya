@@ -5,6 +5,8 @@ import { verifyJWT } from "@/lib/auth-crypto";
 import { saveImage } from "@/lib/storage";
 import { handleDbError } from "@/lib/db-error-logging";
 
+export const dynamic = "force-dynamic";
+
 // GET: Retrieve all active configurations
 export async function GET() {
   try {

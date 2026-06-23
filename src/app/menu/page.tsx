@@ -66,7 +66,9 @@ export default function MenuPage() {
         const res = await fetch("/api/menu");
         if (res.ok) {
           const data = await res.json();
-          if (data.success) {
+          if (Array.isArray(data)) {
+            setItems(data);
+          } else if (data && data.success) {
             setItems(data.items || []);
           }
         }

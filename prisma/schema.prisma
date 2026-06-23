@@ -1,0 +1,233 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Restaurant Branches (Multi-Branch support)
+model RestaurantBranch {
+  id             String        @id @default(uuid())
+  name           String
+  address        String
+  phone          String
+  operatingHours String
+  tables         Table[]
+  orders         Order[]
+  reservations   Reservation[]
+  users          User[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+// User role definition (e.g. ADMIN, CUSTOMER)
+model Role {
+  id    String @id @default(uuid())
+  name  String @unique
+  users User[]
+}
+
+// System Users (Both Admin staff and registered Customers)
+model User {
+  id              String            @id @default(uuid())
+  name            String
+  email           String            @unique
+  password        String
+  roleId          String
+  role            Role              @relation(fields: [roleId], references: [id])
+  customerProfile Customer?
+  cartItems       CartItem[]
+  refreshTokens   RefreshToken[]
+  auditLogs       AuditLog[]
+  branchId        String?
+  branch          RestaurantBranch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+// Menu Categories (Starters, Soups, Vegetarian, Non-Vegetarian, Biryani, etc.)
+model Category {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  menuItems MenuItem[]
+}
+
+// Menu Items with availability and prep time
+model MenuItem {
+  id          String               @id @default(uuid())
+  name        String
+  teluguName  String?
+  isVeg       Boolean              @default(true)
+  description String
+  price       Float
+  image       String
+  isAvailable Boolean              @default(true)
+  isFeatured  Boolean              @default(false)
+  prepTime    Int                  // Average preparation time in minutes
+  categoryId  String
+  category    Category             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+  ingredients MenuItemIngredient[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+}
+
+// Ingredients mapping (Inventory layer preparation)
+model MenuItemIngredient {
+  id          String   @id @default(uuid())
+  menuItemId  String
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  name        String
+  quantity    Float
+  unit        String   // grams, ml, units
+  isAvailable Boolean  @default(true)
+}
+
+// Persistent Cart Items linked to a registered User
+model CartItem {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  quantity   Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, menuItemId])
+}
+
+// Customer Profile (automatically compiled from checkouts or linked to a User account)
+model Customer {
+  id             String        @id @default(uuid())
+  name           String
+  email          String        @unique
+  phone          String
+  userId         String?       @unique
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  totalOrders    Int           @default(0)
+  lastOrderDate  DateTime?
+  orders         Order[]
+  reservations   Reservation[]
+  reviews        Review[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+// Orders lifecycle model
+model Order {
+  id          String            @id @default(uuid())
+  customerId  String
+  customer    Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  totalAmount Float
+  status      String            @default("PENDING") // PENDING, CONFIRMED, PREPARING, READY, OUT_FOR_DELIVERY, DELIVERED, CANCELLED
+  notes       String?
+  items       OrderItem[]
+  review      Review?
+  branchId    String?
+  branch      RestaurantBranch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+// Items ordered inside an Order
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+  quantity   Int
+  price      Float    // Price of the item at purchase time
+}
+
+// Dining Tables (Exactly 20 tables in the system)
+model Table {
+  id           String            @id @default(uuid())
+  number       Int               @unique
+  capacity     Int
+  status       String            @default("AVAILABLE") // AVAILABLE, RESERVED, OCCUPIED, MAINTENANCE
+  reservations Reservation[]
+  branchId     String?
+  branch       RestaurantBranch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+}
+
+// Table Reservations
+model Reservation {
+  id         String            @id @default(uuid())
+  name       String
+  email      String
+  phone      String
+  date       String            // YYYY-MM-DD
+  time       String            // HH:MM
+  guests     Int
+  notes      String?
+  status     String            @default("PENDING") // PENDING, APPROVED, REJECTED, CANCELLED
+  tableId    String?
+  table      Table?            @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  customerId String?
+  customer   Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  branchId   String?
+  branch     RestaurantBranch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+}
+
+// Ratings and Reviews System
+model Review {
+  id         String    @id @default(uuid())
+  name       String
+  email      String
+  rating     Int       // 1 to 5 stars
+  comment    String
+  status     String    @default("PENDING") // PENDING, APPROVED, HIDDEN
+  isFeatured Boolean   @default(false)
+  orderId    String?   @unique // Prevents duplicate reviews for the same completed order
+  order      Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+}
+
+// Real-time prioritized notification log
+model Notification {
+  id        String   @id @default(uuid())
+  type      String   // NEW_ORDER, NEW_RESERVATION, RESERVATION_CANCELLATION, NEW_REVIEW
+  priority  String   @default("INFO") // INFO, WARNING, CRITICAL
+  status    String   @default("UNREAD") // UNREAD, READ, ARCHIVED
+  message   String
+  createdAt DateTime @default(now())
+}
+
+// Expanded Audit Logs for admin activity tracking
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  role      String?
+  action    String   // CUSTOMER_LOGIN, CUSTOMER_REGISTER, PASSWORD_RESET, REVIEW_APPROVED, REVIEW_REJECTED, TABLE_ASSIGNED, TABLE_RELEASED, SETTINGS_UPDATED, MENU_UPDATED, ORDER_STATUS
+  details   String   // Text description or serialized JSON metadata
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+// Security Session Refresh Tokens
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  rotated   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// App Settings (e.g. gst_percentage, delivery_fee, restaurant_name)
+model Setting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+}

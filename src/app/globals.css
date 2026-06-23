@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root {
+  /* Restoran Template Design System */
+  --color-charcoal: #0F172B;        /* Text Primary - Dark Navy */
+  --color-charcoal-light: #666666;  /* Text Secondary - Gray */
+  
+  --color-gold: #FEA116;            /* Restoran Orange (Primary Accent) */
+  --color-gold-dark: #E08E0B;       /* Restoran Orange Hover */
+  --color-gold-light: #FEA116;      /* Restoran Orange */
+  
+  --color-cream: #F1F8FF;           /* Secondary Background - Light Blue-White */
+  --color-cream-dark: #E5E7EB;      /* Borders / Element Gray */
+  --color-cream-light: #FFFFFF;     /* Primary Background - Pure White */
+
+  /* Global background/foreground mappings */
+  --background: var(--color-cream-light);
+  --foreground: var(--color-charcoal);
+
+  /* Typography mappings */
+  --font-serif: var(--font-playfair), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+}
+
+@theme {
+  --color-charcoal: var(--color-charcoal);
+  --color-charcoal-light: var(--color-charcoal-light);
+  --color-gold: var(--color-gold);
+  --color-gold-dark: var(--color-gold-dark);
+  --color-gold-light: var(--color-gold-light);
+  --color-cream: var(--color-cream);
+  --color-cream-dark: var(--color-cream-dark);
+  --color-cream-light: var(--color-cream-light);
+
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6, .font-serif {
+  font-family: var(--font-serif);
+  letter-spacing: -0.02em;
+}
+
+/* Shared Premium Restoran Dark Footer Styling */
+footer {
+  background-color: #0F172B !important;
+  color: #FFFFFF !important;
+  border-top: 1px solid rgba(254, 161, 22, 0.15) !important;
+}
+footer span, footer p, footer a {
+  color: #A1A1A1 !important;
+}
+footer a:hover {
+  color: #FEA116 !important;
+}
